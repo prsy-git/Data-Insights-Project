@@ -6,6 +6,7 @@ UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'csv'}
 
 app = Flask(__name__)
+app.config['SECRET KEY'] = 'secret-dev-key'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 #webapp page routes
