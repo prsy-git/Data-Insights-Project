@@ -1,8 +1,8 @@
 import pandas as pd
 
-def count_rows(file_path:str) -> int:
+def load_dataframe(file_path:str) -> pd.DataFrame:
     df = pd.read_csv(file_path)
+    return df
 
-    row_count = len(df)
-
-    return row_count
+def count_rows(df:pd.DataFrame) -> int:
+    return len(df)

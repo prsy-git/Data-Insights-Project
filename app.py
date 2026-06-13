@@ -1,12 +1,13 @@
 import os
 from flask import Flask, render_template, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
+import analytics
 
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'csv'}
 
 app = Flask(__name__)
-app.config['SECRET KEY'] = 'secret-dev-key'
+app.config['SECRET_KEY'] = 'secret-dev-key'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 #webapp page routes
@@ -15,33 +16,40 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def home():
     return render_template('index.html')
 
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
-
 #file upload handling and routes
 def is_allowed_file(filename: str):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/dashboard', methods=['GET', 'POST'])
-def upload_file():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        
-        file = request.files['file']
+def dashboard():
+    if request.method != 'POST':
+        return render_template('dashboard.html')
+    
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    
+    file = request.files['file']
 
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        
-        if file and is_allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return render_template('dashboard.html')
-        
-    return render_template('dashboard.html')
+    if file.filename == '':
+        flash('No seelcted file')
+        return redirect(request.url)
+    
+    if not is_allowed_file(file.filename):
+        flash('File type not allowed')
+        return redirect(request.url)
+    
+    filename = secure_filename(file.filename)
+    file_dest = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(file_dest)
+
+    #Trigger the analytics calls on POST routing.
+    run_df = analytics.load_dataframe(file_dest)
+    run_row_count = analytics.count_rows(run_df)
+
+    print(f"Test message: Triggered, counted {run_row_count} rows")
+
+    return render_template('dashboard.html', rows=run_row_count)
 
 
 if __name__ == '__main__':
