@@ -11,3 +11,13 @@ def count_rows(df:pd.DataFrame) -> int:
 def count_columns(df:pd.DataFrame) -> int:
     col = df.columns
     return len(col)
+
+def create_dashboard_data(passed_df:pd.DataFrame) -> dict:
+    
+    analysis_dict = {
+        "row_count": count_rows(passed_df),
+        "col_count": count_columns(passed_df),
+        "html_table": passed_df.to_html()
+    }
+
+    return analysis_dict

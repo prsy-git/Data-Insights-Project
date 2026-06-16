@@ -22,6 +22,7 @@ def is_allowed_file(filename: str):
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
+    #Validation logic for file passing
     if request.method != 'POST':
         return render_template('dashboard.html')
     
@@ -44,12 +45,11 @@ def dashboard():
     file.save(file_dest)
 
     #Trigger the analytics calls on POST routing.
-    run_df = analytics.load_dataframe(file_dest)
-    run_row_count = analytics.count_rows(run_df)
-    run_col_count = analytics.count_columns(run_df)
+    dashboard_df = analytics.load_dataframe(file_dest)
+    dashboard_data = analytics.create_dashboard_data(dashboard_df)
 
-    #ALSO Create table as part of the route. Displays uploaded data as table on dashboard.html
-    return render_template('dashboard.html', rows=run_row_count, cols=run_col_count, tables=[run_df.to_html()], titles=[''])
+    return render_template('dashboard.html', data=dashboard_data)
+    
     
 
 
