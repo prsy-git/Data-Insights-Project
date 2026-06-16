@@ -48,9 +48,10 @@ def dashboard():
     run_row_count = analytics.count_rows(run_df)
     run_col_count = analytics.count_columns(run_df)
 
-    print(f"Test message: Triggered, counted {run_row_count} rows")
+    #ALSO Create table as part of the route. Displays uploaded data as table on dashboard.html
+    return render_template('dashboard.html', rows=run_row_count, cols=run_col_count, tables=[run_df.to_html()], titles=[''])
+    
 
-    return render_template('dashboard.html', rows=run_row_count, cols=run_col_count)
 
 
 if __name__ == '__main__':
