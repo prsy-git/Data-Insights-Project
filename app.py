@@ -2,13 +2,16 @@ import os
 from flask import Flask, render_template, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 import analytics
+import zipfile
 
 UPLOAD_FOLDER = 'uploads/'
-ALLOWED_EXTENSIONS = {'csv'}
+ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'json'}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret-dev-key'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+app.config['PROCESSED_FILE_NAME'] = 'active_data.csv'
 
 #webapp page routes
 
@@ -33,14 +36,16 @@ def dashboard():
     file = request.files['file']
 
     if file.filename == '':
-        flash('No seelcted file')
+        flash('No selected file')
         return redirect(request.url)
     
     if not is_allowed_file(file.filename):
         flash('File type not allowed')
         return redirect(request.url)
     
-    filename = secure_filename(file.filename)
+    _, file_extension = os.path.splitext(file.filename)
+    
+    filename = f"active_data{file_extension}"
     file_dest = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(file_dest)
 
@@ -49,6 +54,10 @@ def dashboard():
     dashboard_data = analytics.create_dashboard_data(dashboard_df)
 
     return render_template('dashboard.html', data=dashboard_data)
+
+# @app.route('/dsahboard/clean_values', methods=['POST'])
+# def clean_data():
+
     
     
 

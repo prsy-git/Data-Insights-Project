@@ -41,11 +41,18 @@
         </tbody>
         </table>
 
-    <h2 style="text-align: center;">Your Data</h2>
+    <h2 style="text-align: center;">At a Glance: First 50 Rows of Data</h2>
 
-    <div class="table-div">
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        
         {{ data.html_table | safe }}
+
     </div>
+    
+    <form method="POST" action="{{ url_for('dashboard') }}">
+        <input type="hidden" name="action" value="button_drop_missing">
+        <button type="submit" class="btn btn-danger">Drop Missing Values</button>
+    </form>
     {% endif %}
 
 
