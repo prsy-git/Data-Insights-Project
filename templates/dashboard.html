@@ -18,6 +18,13 @@
         </form>
     </div>
 
+    <div class="form-div">
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('kaggle_import') }}">
+            <input type=url name=url placeholder="Paste Kaggle URL Here" required>
+            <button type="submit">Import Dataset</button>
+        </form>
+    </div>
+
     {% if data %}
         <h2 style="text-align: center;">Data Insights</h2>
 

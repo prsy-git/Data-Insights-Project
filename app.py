@@ -1,8 +1,16 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
-import analytics
 import zipfile
+
+#load environment variables before use in analytics
+load_dotenv()
+import analytics
+
+print("ENV DEBUG CHECK")
+print("Username: ", os.environ.get("KAGGLE_USERNAME"))
+print("KEY: ", os.environ.get("KAGGLE_API_TOKEN"))
 
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'json'}
@@ -19,7 +27,7 @@ app.config['PROCESSED_FILE_NAME'] = 'active_data.csv'
 def home():
     return render_template('index.html')
 
-#file upload handling and routes
+#Dashboard routes
 def is_allowed_file(filename: str):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -55,13 +63,37 @@ def dashboard():
 
     return render_template('dashboard.html', data=dashboard_data)
 
-# @app.route('/dsahboard/clean_values', methods=['POST'])
+@app.route('/dashboard/kaggle-import', methods=['POST'])
+def kaggle_import():
+    kaggle_url = request.form.get('url')
+
+    if not kaggle_url:
+        flash("Invalid kaggle URL. Please try again.")
+        return redirect(url_for('dashboard'))
+    
+    try:
+        extracted_path = analytics.download_kaggle_dataset(kaggle_url, UPLOAD_FOLDER)
+
+        _, file_extension = os.path.splitext(extracted_path)
+
+        filename = f"active_data{file_extension}"
+        active_destination = os.path.join(UPLOAD_FOLDER, filename)
+
+        if os.path.exists(active_destination):
+            os.remove(active_destination)
+        os.rename(extracted_path, active_destination)
+
+        dashboard_df = analytics.load_dataframe(active_destination)
+        dashboard_data = analytics.create_dashboard_data(dashboard_df)
+
+        return render_template('dashboard.html', data=dashboard_data)
+
+    except Exception as error:
+        flash("Error: Failed kaggle import. Please try again")
+        return redirect(url_for('dashboard'))
+
+# @app.route('/dashboard/clean_values', methods=['POST'])
 # def clean_data():
-
-    
-    
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
