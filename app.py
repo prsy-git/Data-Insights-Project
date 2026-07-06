@@ -92,8 +92,37 @@ def kaggle_import():
         flash("Error: Failed kaggle import. Please try again")
         return redirect(url_for('dashboard'))
 
-# @app.route('/dashboard/clean_values', methods=['POST'])
-# def clean_data():
+@app.route('/dashboard/clean_values', methods=['POST'])
+def clean_data():
+    active_file = None
+    for file in os.listdir(app.config['UPLOAD_FOLDER']):
+        if file.startswith("active_data"):
+            active_file = file
+            break
+
+    if not active_file:
+        flash("No active file")
+        return redirect(url_for('dashboard'))
+    
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], active_file)
+
+    df = analytics.load_dataframe(file_path)
+    clean_df = analytics.button_drop_missing(df)
+
+    #Reconstruct file with removed data
+    if file_path.endswith('.csv'):
+        clean_df.to_csv(file_path, index=False)
+    elif file_path.endswith('.xlsx'):
+        clean_df.to_excel(file_path, index=False)
+    elif file_path.endswith('.json', orient='records'):
+        clean_df.to_json(file_path)
+
+    flash("Cleaned data. Empty cells dropped.")
+
+    dashboard_data = analytics.create_dashboard_data(clean_df)
+    return render_template('dashboard.html', data=dashboard_data)
+
+    
 
 if __name__ == '__main__':
     app.run(debug=True)
