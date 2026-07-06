@@ -109,3 +109,16 @@ h1, h2 {
     margin-top: 1rem;
     margin-bottom: 1.5rem;
 }
+
+.table-scroll-window .dataframe {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-scroll-window th,
+.table-scroll-window td {
+    padding: 20px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
