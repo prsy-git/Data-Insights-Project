@@ -122,8 +122,6 @@ def clean_data():
     dashboard_data = analytics.create_dashboard_data(clean_df)
     return render_template('dashboard.html', data=dashboard_data)
 
-    
-
 if __name__ == '__main__':
     app.run(debug=True)
 
