@@ -32,7 +32,8 @@ def create_dashboard_data(passed_df:pd.DataFrame) -> dict:
     analysis_dict = {
         "row_count": count_rows(passed_df),
         "col_count": count_columns(passed_df),
-        "html_table": passed_df.head(50).to_html()
+        "html_table": passed_df.head(50).to_html(),
+        "col_list": passed_df.columns.tolist()
     }
 
     return analysis_dict
