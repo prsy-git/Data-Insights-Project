@@ -34,34 +34,31 @@ def is_allowed_file(filename: str):
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     #Validation logic for file passing
-    if request.method != 'POST':
-        return render_template('dashboard.html')
+    if request.method == 'POST':
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename != '' and is_allowed_file(file.filename):
+                _, file_extension = os.path.splitext(file.filename)
+                filename = f"active_data{file_extension}"
+                file_dest = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_dest)
     
-    if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    
-    file = request.files['file']
+    #read in case of no file
+    active_file = None
+    if os.path.exists(app.config['UPLOAD_FOLDER']):
+        for file in os.listdir(app.config['UPLOAD_FOLDER']):
+            if file.startswith("active_data"):
+                active_file = file
+                break
 
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
+    #otherwise if active file
+    if active_file:
+        file_dest = os.path.join(app.config['UPLOAD_FOLDER'], active_file)
+        dashboard_df = analytics.load_dataframe(file_dest)
+        dashboard_data = analytics.create_dashboard_data(dashboard_df)
+        return render_template('dashboard.html', data=dashboard_data)
     
-    if not is_allowed_file(file.filename):
-        flash('File type not allowed')
-        return redirect(request.url)
-    
-    _, file_extension = os.path.splitext(file.filename)
-    
-    filename = f"active_data{file_extension}"
-    file_dest = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(file_dest)
-
-    #Trigger the analytics calls on POST routing.
-    dashboard_df = analytics.load_dataframe(file_dest)
-    dashboard_data = analytics.create_dashboard_data(dashboard_df)
-
-    return render_template('dashboard.html', data=dashboard_data)
+    return render_template('dashboard.html')
 
 @app.route('/dashboard/kaggle-import', methods=['POST'])
 def kaggle_import():

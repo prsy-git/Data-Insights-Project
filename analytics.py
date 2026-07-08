@@ -27,17 +27,6 @@ def count_columns(df:pd.DataFrame) -> int:
     col = df.columns
     return len(col)
 
-def create_dashboard_data(passed_df:pd.DataFrame) -> dict:
-    
-    analysis_dict = {
-        "row_count": count_rows(passed_df),
-        "col_count": count_columns(passed_df),
-        "html_table": passed_df.head(50).to_html(),
-        "col_list": passed_df.columns.tolist()
-    }
-
-    return analysis_dict
-
 def button_drop_missing(df:pd.DataFrame) -> None:
     cleaned_df = df.dropna()
     return cleaned_df
@@ -58,4 +47,27 @@ def download_kaggle_dataset(url: str, dest_folder: str) -> str:
             return path
         
     raise FileNotFoundError("File not found in KaggleAPI Pull")
+
+def get_numeric_columns(df: pd.DataFrame) -> list:
+    column_list = df.columns.to_list()
+    numeric_cols = []
+
+    for col in column_list:
+        if pd.api.types.is_numeric_dtype(df[col]):
+            numeric_cols.append(col)
+
+    return numeric_cols
+    
+
+def create_dashboard_data(passed_df:pd.DataFrame) -> dict:
+
+    analysis_dict = {
+        "row_count": count_rows(passed_df),
+        "col_count": count_columns(passed_df),
+        "html_table": passed_df.head(50).to_html(),
+        "col_list": passed_df.columns.tolist(),
+        "numeric_col_list": get_numeric_columns(passed_df)
+    }
+
+    return analysis_dict
 
