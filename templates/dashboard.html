@@ -68,7 +68,7 @@
             <div class="form-card">
                 <h5 class="mb-3">Compare Columns Graphically</h5>
 
-                <form method="POST" action="">
+                <form method="POST" action="{{ url_for('plot_bivariate') }}">
                     <div class="mb-3">
                         <label class="form-label text-muted small fw-bold">COLUMN A (X-AXIS)</label>
                         <select name="column_a" class="form-select">
@@ -91,7 +91,19 @@
 
                     <button type="submit" class="btn btn-primary w-100 mt-2">Generate Graph</button>
                 </form>
-    </div>
+
+                <!--graph container-->
+                {% if graph %}
+                    <div class="mt-4 pt-4 border-top text-center">
+                        <h6 class="text-muted small fw-bold mb-3">Bivariate Graph Generated From Selection</h6>
+                        <img src="{{ url_for('static', filename='images/' ~ graph) }}?v={{ timestamp }}" alt="Bivariate Plot" class="img-fluid rounded shadow-sm">>
+                    </div>
+                {% endif %}
+
+
+            </div>
+
+
     {% endif %}
 
 

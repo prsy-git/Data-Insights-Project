@@ -1,4 +1,6 @@
 import os
+import time
+import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
@@ -118,6 +120,47 @@ def clean_data():
 
     dashboard_data = analytics.create_dashboard_data(clean_df)
     return render_template('dashboard.html', data=dashboard_data)
+
+@app.route('/dashboard/plot', methods=['POST'])
+def plot_bivariate():
+    
+    #Write helper function to duplicate this code later
+    active_file = None
+    for file in os.listdir(app.config['UPLOAD_FOLDER']):
+        if file.startswith("active_data"):
+            active_file = file
+            break
+
+    if not active_file:
+        flash("No active file")
+        return redirect(url_for('dashboard'))
+    
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], active_file)
+    df = analytics.load_dataframe(file_path)
+    #Write helper function to duplicate this code later
+    
+    x_col_name = request.form.get('column_a')
+    y_col_name = request.form.get('column_b')
+
+    x_series = df[x_col_name]
+    y_series = df[y_col_name]
+
+    #Code to clear previous graphs if existing
+    plt.clf()
+    graph_axes = analytics.graph_comparison(x_series, y_series)
+
+    plot_filename = "dashboard_plot.png"
+    plot_filepath = os.path.join(app.root_path, 'static', 'images', plot_filename)
+
+    os.makedirs(os.path.dirname(plot_filepath), exist_ok=True)
+
+    plt.savefig(plot_filepath, bbox_inches='tight')
+
+    #Timestamp to reset current graphs
+    timestamp = int(time.time())
+
+    dashboard_data = analytics.create_dashboard_data(df)
+    return render_template('dashboard.html', data=dashboard_data, graph=plot_filename, timestamp = timestamp)
 
 if __name__ == '__main__':
     app.run(debug=True)

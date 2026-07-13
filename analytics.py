@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 import numpy as np
 from kaggle.api.kaggle_api_extended import KaggleApi
 import zipfile
@@ -57,7 +59,19 @@ def get_numeric_columns(df: pd.DataFrame) -> list:
             numeric_cols.append(col)
 
     return numeric_cols
-    
+
+#Returns a matplot axes value
+def graph_comparison(col1: pd.Series, col2: pd.Series):
+    x_series = col1
+    y_series = col2
+
+    plt.figure(figsize=(8, 5))
+
+    axes_plot = sns.scatterplot(x = x_series, y = y_series, alpha=0.6)
+    axes_plot.set_title("Bivariate Analysis of Selected Numeric Variables from Dataset")
+    plt.tight_layout()
+
+    return axes_plot
 
 def create_dashboard_data(passed_df:pd.DataFrame) -> dict:
 
