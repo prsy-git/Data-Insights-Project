@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import seaborn as sns
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -18,7 +20,6 @@ def load_dataframe(file_path:str) -> pd.DataFrame:
 
     elif extension_str == "json":
         df = pd.read_json(file_path)
-    
     
     return df
 
@@ -62,6 +63,7 @@ def get_numeric_columns(df: pd.DataFrame) -> list:
 
 #Returns a matplot axes value
 def graph_comparison(col1: pd.Series, col2: pd.Series):
+    #TODO: add cases allowing users to select multiple types of graphs, read in from form dropdown
     x_series = col1
     y_series = col2
 

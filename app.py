@@ -1,5 +1,7 @@
 import os
 import time
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, redirect, url_for
