@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
-import zipfile
+from cryptography.fernet import Fernet
+#PLANNED FEATURE: Create user authentication with fernet / sql
 
 #load environment variables before use in analytics
 load_dotenv()
@@ -140,6 +141,12 @@ def plot_bivariate():
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], active_file)
     df = analytics.load_dataframe(file_path)
     #Write helper function to duplicate this code later
+
+    #Request the graph type to be used from the form
+    graph_type = request.form.get('graph_type')
+
+    if not graph_type:
+        return "Select a graph type", 400
     
     x_col_name = request.form.get('column_a')
     y_col_name = request.form.get('column_b')
@@ -149,7 +156,7 @@ def plot_bivariate():
 
     #Code to clear previous graphs if existing
     plt.clf()
-    graph_axes = analytics.graph_comparison(x_series, y_series)
+    graph_axes = analytics.graph_comparison(x_series, y_series, graph_type)
 
     plot_filename = "dashboard_plot.png"
     plot_filepath = os.path.join(app.root_path, 'static', 'images', plot_filename)

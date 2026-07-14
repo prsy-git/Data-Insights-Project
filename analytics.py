@@ -62,14 +62,20 @@ def get_numeric_columns(df: pd.DataFrame) -> list:
     return numeric_cols
 
 #Returns a matplot axes value
-def graph_comparison(col1: pd.Series, col2: pd.Series):
+def graph_comparison(col1: pd.Series, col2: pd.Series, graph_type: str):
     #TODO: add cases allowing users to select multiple types of graphs, read in from form dropdown
     x_series = col1
     y_series = col2
 
     plt.figure(figsize=(8, 5))
+    axes_plot = None
+    
+    match graph_type:
+        case "box":
+            axes_plot = sns.boxplot(x = x_series, y = y_series)
+        case "scatter":
+            axes_plot = sns.scatterplot(x = x_series, y = y_series, alpha=0.6)
 
-    axes_plot = sns.scatterplot(x = x_series, y = y_series, alpha=0.6)
     axes_plot.set_title("Bivariate Analysis of Selected Numeric Variables from Dataset")
     plt.tight_layout()
 
