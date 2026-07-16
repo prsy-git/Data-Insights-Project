@@ -5,9 +5,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, redirect, url_for
-from werkzeug.utils import secure_filename
-from cryptography.fernet import Fernet
-#PLANNED FEATURE: Create user authentication with fernet / sql
+from db_helper import init_auth_db, register_user
+#PLANNED FEATURE: Create user authentication with fernet / sqlLite
 
 #load environment variables before use in analytics
 load_dotenv()
@@ -17,17 +16,19 @@ print("ENV DEBUG CHECK")
 print("Username: ", os.environ.get("KAGGLE_USERNAME"))
 print("KEY: ", os.environ.get("KAGGLE_API_TOKEN"))
 
+
+DATABASE = 'users.db'
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'json'}
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret-dev-key'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
 app.config['PROCESSED_FILE_NAME'] = 'active_data.csv'
 
-#webapp page routes
+init_auth_db()
 
+#webapp page routes
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -170,6 +171,24 @@ def plot_bivariate():
 
     dashboard_data = analytics.create_dashboard_data(df)
     return render_template('dashboard.html', data=dashboard_data, graph=plot_filename, timestamp = timestamp)
+
+#Routes to deal with User login / registration
+@app.route('/register', methods = ['GET', 'POST'])
+def register_page():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        kaggle_username = request.form.get('kaggle_username')
+        api_key = request.form.get('api_key')
+
+        success = register_user(username, password, kaggle_username, api_key)
+
+        if success:
+            return redirect(url_for('home'))
+        else:
+            return "Registration error. "
+        
+    return render_template('register.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
