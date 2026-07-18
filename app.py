@@ -4,9 +4,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
-from flask import Flask, render_template, flash, request, redirect, url_for
-from db_helper import init_auth_db, register_user
-#PLANNED FEATURE: Create user authentication with fernet / sqlLite
+from flask import Flask, render_template, flash, request, redirect, url_for, session
+from db_helper import init_auth_db, register_user, verify_user, get_encrypted_user_api
 
 #load environment variables before use in analytics
 load_dotenv()
@@ -68,6 +67,23 @@ def dashboard():
 
 @app.route('/dashboard/kaggle-import', methods=['POST'])
 def kaggle_import():
+    #Ensure a user with an associated kaggle account is added. Required to validate that a kaggle username and key are properly stored.
+    if 'user_id' not in session:
+        flash("Log in to an account with a kaggle account associated first to access the dataset import feature.")
+        return redirect(url_for('login_page'))
+    
+    #Run get encrypted user api to check for none values
+    check_user_id = session.get('user_id')
+    kaggle_user, kaggle_key = get_encrypted_user_api(check_user_id)
+
+    if not kaggle_user or not kaggle_key:
+        flash("An existing kaggle username and api key must be associated with this account to access this feature. Please add those to your account.")
+        return redirect(url_for('login_page'))
+
+    #If passing checks, overwrite environment variables with account information
+    os.environ["KAGGLE_USERNAME"] = kaggle_user
+    os.environ["KAGGLE_API_TOKEN"] = kaggle_key
+
     kaggle_url = request.form.get('url')
 
     if not kaggle_url:
@@ -189,6 +205,27 @@ def register_page():
             return "Registration error. "
         
     return render_template('register.html')
+
+@app.route('/login', methods = ['GET', 'POST'])
+def login_page():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        user_id = verify_user(username, password)
+
+        if user_id:
+            session['user_id'] = user_id
+            session['username'] = username
+
+            flash(f"{username} logged in.")
+            return redirect(url_for('dashboard'))
+        
+        else:
+            flash("Invalid username or password")
+
+    return render_template('login.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
