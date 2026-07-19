@@ -27,6 +27,9 @@ app.config['PROCESSED_FILE_NAME'] = 'active_data.csv'
 
 init_auth_db()
 
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 #webapp page routes
 @app.route('/')
 def home():
@@ -133,8 +136,8 @@ def clean_data():
         clean_df.to_csv(file_path, index=False)
     elif file_path.endswith('.xlsx'):
         clean_df.to_excel(file_path, index=False)
-    elif file_path.endswith('.json', orient='records'):
-        clean_df.to_json(file_path)
+    elif file_path.endswith('.json'):
+        clean_df.to_json(file_path, orient='records')
 
     flash("Cleaned data. Empty cells dropped.")
 
