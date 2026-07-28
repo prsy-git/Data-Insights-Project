@@ -62,21 +62,29 @@ def decrypt_api_key(encrypted_api_key: str) -> str:
 
 #Database / CRUD Operations
 def init_auth_db():
-    if not os.path.exists(SCHEMA_FILE):
-        raise FileNotFoundError("Missing SQL Schema for User / Login Database")
-    
     connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
 
     try:
-        with open(SCHEMA_FILE, "r") as file:
-            schema_sql = file.read()
-
-        cursor.executescript(schema_sql)
+        #Uses cursor execution if not schema
+        if os.path.exists(SCHEMA_FILE):
+            with open(SCHEMA_FILE, "r") as file:
+                schema_sql = file.read()
+            cursor.executescript(schema_sql)
+        else:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS App_Users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash BLOB NOT NULL,
+                    password_salt BLOB NOT NULL,
+                    kaggle_username TEXT,
+                    api_key_hash TEXT
+                    );
+            """)
         connection.commit()
-        
-    except:
-        print("Failed to set up database")
+    except Exception as e:
+        print(f"Failed to set up database: {e}")
     finally:
         connection.close()
 

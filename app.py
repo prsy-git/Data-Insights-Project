@@ -1,11 +1,12 @@
 import os
+import shutil
 import time
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from flask import Flask, render_template, flash, request, redirect, url_for, session
-from db_helper import init_auth_db, register_user, verify_user, get_encrypted_user_api
+from db_helper import init_auth_db, register_user, verify_user, get_encrypted_user_api, MASTER_KEY
 
 #load environment variables before use in analytics
 load_dotenv()
@@ -21,14 +22,16 @@ UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'json'}
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret-dev-key'
+app.config['SECRET_KEY'] = MASTER_KEY
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROCESSED_FILE_NAME'] = 'active_data.csv'
 
-init_auth_db()
+#Initialize directories for images and file uploads
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(os.path.join(app.root_path, 'static', 'images'), exist_ok=True)
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+#Call to set up database information and initialize schema if not present
+init_auth_db()
 
 #webapp page routes
 @app.route('/')
@@ -41,7 +44,7 @@ def is_allowed_file(filename: str):
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    #Validation logic for file passing
+    #Validation logic for file passing / POST
     if request.method == 'POST':
         if 'file' in request.files:
             file = request.files['file']
@@ -50,8 +53,11 @@ def dashboard():
                 filename = f"active_data{file_extension}"
                 file_dest = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(file_dest)
+
+                flash("Local file uploaded.")
+                return redirect(url_for('dashboard'))
     
-    #read in case of no file
+    #read in case of no file / GET
     active_file = None
     if os.path.exists(app.config['UPLOAD_FOLDER']):
         for file in os.listdir(app.config['UPLOAD_FOLDER']):
@@ -68,6 +74,7 @@ def dashboard():
     
     return render_template('dashboard.html')
 
+@app.route('/dashboard/kaggle-import', methods=['POST'])
 @app.route('/dashboard/kaggle-import', methods=['POST'])
 def kaggle_import():
     #Ensure a user with an associated kaggle account is added. Required to validate that a kaggle username and key are properly stored.
@@ -94,23 +101,31 @@ def kaggle_import():
         return redirect(url_for('dashboard'))
     
     try:
-        extracted_path = analytics.download_kaggle_dataset(kaggle_url, UPLOAD_FOLDER)
+        #Clean previous dataset displayed as active
+        if os.path.exists(app.config['UPLOAD_FOLDER']):
+            for file in os.listdir(app.config['UPLOAD_FOLDER']):
+                if file.startswith("active_data"):
+                    try:
+                        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], file))
+                    except OSError:
+                        pass
 
+        #Download dataset
+        extracted_path = analytics.download_kaggle_dataset(kaggle_url, UPLOAD_FOLDER)
         _, file_extension = os.path.splitext(extracted_path)
 
         filename = f"active_data{file_extension}"
         active_destination = os.path.join(UPLOAD_FOLDER, filename)
 
-        if os.path.exists(active_destination):
-            os.remove(active_destination)
-        os.rename(extracted_path, active_destination)
+        #If path is not in destination, move it to it
+        if os.path.abspath(extracted_path) != os.path.abspath(active_destination):
+            shutil.move(extracted_path, active_destination)
 
-        dashboard_df = analytics.load_dataframe(active_destination)
-        dashboard_data = analytics.create_dashboard_data(dashboard_df)
-
-        return render_template('dashboard.html', data=dashboard_data)
+        flash("Kaggle file imported successfully.")
+        return redirect(url_for('dashboard'))
 
     except Exception as error:
+        print(f"KAGGLE IMPORT ERROR: {error}")
         flash("Error: Failed kaggle import. Please try again")
         return redirect(url_for('dashboard'))
 
@@ -228,6 +243,12 @@ def login_page():
             flash("Invalid username or password")
 
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("You have been logged out of user account.")
+    return redirect(url_for('login_page'))
 
 
 if __name__ == '__main__':
