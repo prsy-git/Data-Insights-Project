@@ -143,8 +143,14 @@ def clean_data():
     
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], active_file)
 
+    selected_columns = request.form.getlist('columns')
+
+    if not selected_columns:
+        flash("Select at least one column from dropdown list to clean column(s).")
+        return redirect(url_for('dashboard'))
+    
     df = analytics.load_dataframe(file_path)
-    clean_df = analytics.button_drop_missing(df)
+    clean_df = analytics.button_drop_missing(df, target_columns=selected_columns)
 
     #Reconstruct file with removed data
     if file_path.endswith('.csv'):

@@ -30,8 +30,14 @@ def count_columns(df:pd.DataFrame) -> int:
     col = df.columns
     return len(col)
 
-def button_drop_missing(df:pd.DataFrame) -> None:
-    cleaned_df = df.dropna()
+def button_drop_missing(df:pd.DataFrame, target_columns: list = None) -> None:
+    if target_columns:
+        #Drop if columns to be checked for missing values are selected by user
+        cleaned_df = df.dropna(subset=target_columns)
+    else:
+        #Otherwise, drop for all columns
+        cleaned_df = df.dropna()
+
     return cleaned_df
 
 def download_kaggle_dataset(url: str, dest_folder: str) -> str:

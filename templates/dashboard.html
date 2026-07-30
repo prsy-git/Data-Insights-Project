@@ -48,9 +48,24 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
                 <h4 class="mb-0">First 50 Rows of Data</h4>
                 
-                <form method="POST" action="{{ url_for('clean_data') }}" class="mb-0">
+                <!--Form to select columns to drop, based on any missing data in selected columns-->
+                <form method="POST" action="{{ url_for('clean_data') }}" class="d-flex align-items-center gap-2 flex-wrap mb-0">
                     <input type="hidden" name="action" value="button_drop_missing">
-                    <button type="submit" class="btn btn-danger">Drop Missing Values</button>
+                    
+                    <div class="input-group input-group-sm" style="max-width: 320px;"> 
+                        <select name="columns" id="column-select" class="form-select-sm" multiple required size="3">
+                            {% if data and data.columns %}
+                                {% for col in data.columns %}
+                                    <option value="{{ col }}" selected>{{ col }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="" disabled>No columns in dataset.</option>
+                            {% endif %}
+                        </select>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleSelectAllColumns('cleanColumnsSelect')">Toggle All</button>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-danger btn-sm">Drop Missing Values</button>
                 </form>
             </div>
 
@@ -58,6 +73,26 @@
                 {{ data.html_table | safe }}
             </div>
         </div>
+
+        <!--Script for toggle all in multiple select form-->
+        <script>
+        function toggleSelectAllColumns(selectId) {
+            const select = document.getElementById(selectId);
+            const options = select.options;
+            let allSelected = true;
+
+            for (let i = 0; i < options.length; i++) {
+                if (!options[i].selected) {
+                    allSelected = false;
+                    break;
+                }
+            }
+
+            for (let i = 0; i < options.length; i++) {
+                options[i].selected = !allSelected;
+            }
+        }
+        </script>
 
         
         <div class="form-card">                
