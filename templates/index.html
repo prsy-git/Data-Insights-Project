@@ -3,21 +3,35 @@
 {% block title %}No Code Data Resume Project{% endblock %}
 
 {% block content %}
-    <h1 style="text-align: center;">H1 Project Title.</h1>
-    
-    <h2 style="text-align: center;">H2 Project Description</h2>
-    
-    <p style="text-align: center;">This is a webapp project intended to make extracting cursory kaggle insights from datasets simpler. This can be used for people without knowledge of programming, as well as others.</p>
+    <div class="text-center py-5">
+    <h1 class="display-4 fw-bold">Explore Your Data Without Writing Code</h1>
 
-    <div class="nav-div">
-        <a href="{{ url_for('dashboard') }}">Go to data dashboard to upload files.</a>
+    <p class="lead text-muted mx-auto" style="max-width: 700px;">
+        Upload a dataset or import one from Kaggle to quickly inspect,
+        clean, visualize, and identify potential data quality issues.
+    </p>
     </div>
 
-    <div class="nav-div">
-        <a href="{{ url_for('register_page') }}">Go to registration to associate user account with kaggle API key.</a>
-    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">    
+        <div class="col-md-4">
+            <a href="{{ url_for('dashboard') }}"
+            class="btn btn-primary w-100 py-3">
+                Open Data Dashboard
+            </a>
+        </div>
 
-    <div class="nav-div">
-        <a href="{{ url_for('login_page') }}">Log in to a created account.</a>
+        <div class="col-md-4">
+            <a href="{{ url_for('register_page') }}"
+            class="btn btn-outline-secondary w-100 py-3">
+                Create Account
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ url_for('login_page') }}"
+            class="btn btn-outline-secondary w-100 py-3">
+                Log In
+            </a>
+        </div>
     </div>
 {% endblock %}

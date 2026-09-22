@@ -180,6 +180,18 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-#ignore uploads folder so they aren't stored for unique users and other things from project
+#Ignore uploads folder so they aren't stored for unique users and other things from project
 uploads/
+
+#Ignore secret key file so it isn't stored in the repo
 .secret.key
+
+# Runtime-generated files
+users.db
+static/images/*
+
+# Keep empty directories inside repo
+!uploads/.gitkeep
+!static/images/.gitkeep
+
+

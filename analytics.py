@@ -119,7 +119,10 @@ def graph_comparison(col1: pd.Series, col2: pd.Series, graph_type: str):
     
     match graph_type:
         case "box":
-            axes_plot = sns.boxplot(x = x_series, y = y_series)
+            if x_series.nunique() <= y_series.nunique():
+                axes_plot = sns.boxplot(x = x_series, y = y_series)
+            else:
+                axes_plot = sns.boxplot(x = y_series, y = x_series)
         case "scatter":
             axes_plot = sns.scatterplot(x = x_series, y = y_series, alpha=0.6)
 

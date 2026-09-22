@@ -98,6 +98,13 @@
         <div class="form-card">                
             <h5 class="mb-3">Compare Columns Graphically</h5>
 
+            <div class="alert alert-info mb-3" role="alert">
+                <strong>Visualizer Note:</strong>
+                Only numeric columns are available for visualization.
+                It is up to the user to ensure selected columns are appropriate for chosen graph type.
+                Some combinations may produce misleading or uninformative graphs if not carefully selected.
+            </div>
+
             <form method="POST" action="{{ url_for('plot_bivariate') }}">
                 <div class="mb-3">
                     <label class="form-label text-muted small fw-bold">COLUMN A (X-AXIS)</label>
@@ -123,8 +130,8 @@
                     <label class="form-label text-muted small fw-bold">Choose graph</label>
                     <select name="graph_type" class="form-select">
                         <option value="" disabled selected>Select type of graph</option>
-                            <option value="box">Bar</option>
-                            <option value="scatter">Scatter</option>
+                            <option value="box">Box Plot</option>
+                            <option value="scatter">Scatter Plot</option>
                     </select>
                 </div>
 
