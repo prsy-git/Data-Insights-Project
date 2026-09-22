@@ -1,41 +1,36 @@
 import os
+
+import matplotlib
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
 from kaggle.api.kaggle_api_extended import KaggleApi
-import zipfile
 
-def load_dataframe(file_path:str) -> pd.DataFrame:
-    #conditional logic for each possible file extension, currently: xlsx, csv, json
-    extension_str = file_path.split('.', 1)[1]
-    
-    if extension_str == "csv":
-        df = pd.read_csv(file_path)
+def load_dataframe(file_path: str) -> pd.DataFrame:
+    extension = os.path.splitext(file_path)[1].lower()
 
-    elif extension_str == "xlsx":
-        df = pd.read_excel(file_path)
+    if extension == ".csv":
+        return pd.read_csv(file_path)
+    elif extension == ".xlsx":
+        return pd.read_excel(file_path)
+    elif extension == ".json":
+        return pd.read_json(file_path)
 
-    elif extension_str == "json":
-        df = pd.read_json(file_path)
-    
-    return df
+    raise ValueError(f"Unsupported file type: {extension}")
 
-def count_rows(df:pd.DataFrame) -> int:
+def count_rows(df: pd.DataFrame) -> int:
     return len(df)
 
 def count_columns(df:pd.DataFrame) -> int:
     col = df.columns
     return len(col)
 
-def button_drop_missing(df:pd.DataFrame, target_columns: list = None) -> None:
+def button_drop_missing(df:pd.DataFrame, target_columns: list[str] | None = None) -> pd.DataFrame:
     if target_columns:
-        #Drop if columns to be checked for missing values are selected by user
         cleaned_df = df.dropna(subset=target_columns)
     else:
-        #Otherwise, drop for all columns
         cleaned_df = df.dropna()
 
     return cleaned_df
@@ -44,12 +39,11 @@ def download_kaggle_dataset(url: str, dest_folder: str) -> str:
     api = KaggleApi()
     api.authenticate()
 
-    #Split url into function readable handle string
+    #Split url into function readable handle string, as defined for ingestion in other files
     handle = url.split("kaggle.com/datasets/")[1].split("?")[0]
 
     api.dataset_download_files(handle, path=dest_folder, unzip=True)
 
-    #find extracted file of interest
     for file in os.listdir(dest_folder):
         if file.endswith((".csv", ".xlsx", ".json")):
             path = os.path.join(dest_folder, file)
@@ -67,14 +61,20 @@ def get_numeric_columns(df: pd.DataFrame) -> list:
 
     return numeric_cols
 
-def dataset_quality_alerts(df):
+def dataset_quality_alerts(df: pd.DataFrame) -> dict:
+    """
+    Identify potential data quality issues in a DataFrame.
+
+    Reports columns with more than 10% missing values and detects
+    potential numeric outliers using the IQR method.
+    """
+
     result = {
         "warnings": [],
         "confirmed_clear": "",
         "outlier_details": {}
     }
 
-    #If a specific column has a large amount of missing values (> 10%), throw an alert
     missing_counts = df.isnull().sum()
     ten_percent_missing = missing_counts[missing_counts > (len(df) * 0.1)]
     
@@ -83,7 +83,6 @@ def dataset_quality_alerts(df):
         counts_warning = f"Alert: The columns {cols} are missing greater than 10% of their values. Cleaning the dataset with clean data button or external analysis is recommended."
         result["warnings"].append(counts_warning)
 
-    #If ANY column contains outliers based on its quantile values, alert here. Have a separate dropdown in which specific values for specific columns can be viewed.
     numeric_cols = get_numeric_columns(df)
     affected_columns = []
 
@@ -92,19 +91,21 @@ def dataset_quality_alerts(df):
         third_quantile = df[col].quantile(0.75)
         innerquartile_range = third_quantile - first_quantile
 
+        #Use the 1.5 × IQR rule to identify potential outliers.
         outliers = df[(df[col] < (first_quantile - 1.5 * innerquartile_range)) | (df[col] > (third_quantile + 1.5 * innerquartile_range))]
         
-        if len(outliers) > 0:
+        if not outliers.empty:
             affected_columns.append(col)
-            #Put column name and number of data points affected as a tuple entry in dictionary
             result["outlier_details"][col] = len(outliers)
 
     if affected_columns:
         cols_str = ", ".join(affected_columns)
-        result["warnings"].append(f"🔍 Outliers detected in: [{cols_str}]. Open the dropdown below to review.")
+        result["warnings"].append(f"Potential outliers detected in: [{cols_str}]. Open the dropdown below to review.")
 
     if not result["warnings"]:
-        result["confirmed_clear"] = f"Dataset confirmed to not have any significant issues. There still may be some missing values, so clean if necessary"
+        result["confirmed_clear"] = (
+            "No significant missing-value or numeric outlier warnings were detected."
+    )
 
     return result
 
@@ -125,6 +126,8 @@ def graph_comparison(col1: pd.Series, col2: pd.Series, graph_type: str):
                 axes_plot = sns.boxplot(x = y_series, y = x_series)
         case "scatter":
             axes_plot = sns.scatterplot(x = x_series, y = y_series, alpha=0.6)
+        case _:
+            raise ValueError(f"Unsupported graph type: {graph_type}")
 
     axes_plot.set_title("Bivariate Analysis of Selected Numeric Variables from Dataset")
     plt.tight_layout()

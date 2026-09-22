@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS App_Users (
     password_hash BLOB NOT NULL,
     password_salt BLOB NOT NULL,
     kaggle_username TEXT,
-    api_key_hash TEXT
+    encrypted_api_key TEXT
 )

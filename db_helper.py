@@ -8,8 +8,11 @@ DB_NAME = "users.db"
 SCHEMA_FILE = "schema.sql"
 KEY_FILE = ".secret.key"
 
-#Hashlib password handling
+
 def hash_password(password: str) -> tuple[bytes, bytes]:
+    '''
+    Hashes a password using PBKDF2 with SHA-256 and a random salt.
+    '''
     salt = os.urandom(16)
     hashed_password = hashlib.pbkdf2_hmac(
         hash_name = 'sha256',
@@ -28,45 +31,43 @@ def verify_password(stored_salt: bytes, hashed_pass: bytes, input_pass: str) -> 
     )
     return hmac.compare_digest(hashed_pass, new_hash_pass)
 
-
-#Fernet key handling
 def load_key():
-    #Case 1: Encryption key does not exist and must be created.
+    '''
+    Load the Fernet key from a file or generate a new one if it doesn't exist.    
+    '''
     if not os.path.exists(KEY_FILE):
         new_key = Fernet.generate_key()
         with open(KEY_FILE, "wb") as file:
             file.write(new_key)
         return new_key
     
-    #Otherwise read from file
     else:
         with open(KEY_FILE, "rb") as file:
             return file.read()
-        
+
 MASTER_KEY = load_key()
 cipher_suite = Fernet(MASTER_KEY)
 
-def encrypt_api_key(api_key: str) -> str:
-    #Return text token to hold in SQL schema
+def encrypt_api_key(api_key: str | None) -> str | None:
     if not api_key:
         return None
-    #Convert to bytes, encrypt with cypher, decrypt to string to store with SQL
+    
     return cipher_suite.encrypt(api_key.encode('utf-8')).decode('utf-8')
 
-def decrypt_api_key(encrypted_api_key: str) -> str:
-    #Return database key to original text
+def decrypt_api_key(encrypted_api_key: str | None) -> str | None:
     if not encrypted_api_key:
         return None
     
     return cipher_suite.decrypt(encrypted_api_key.encode('utf-8')).decode('utf-8')
 
-#Database / CRUD Operations
 def init_auth_db():
+    '''
+    Initialize the SQLite database and create the App_Users table if it doesn't exist.
+    '''
     connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
 
     try:
-        #Uses cursor execution if not schema
         if os.path.exists(SCHEMA_FILE):
             with open(SCHEMA_FILE, "r") as file:
                 schema_sql = file.read()
@@ -79,7 +80,7 @@ def init_auth_db():
                     password_hash BLOB NOT NULL,
                     password_salt BLOB NOT NULL,
                     kaggle_username TEXT,
-                    api_key_hash TEXT
+                    encrypted_api_key TEXT
                     );
             """)
         connection.commit()
@@ -89,18 +90,15 @@ def init_auth_db():
         connection.close()
 
 def register_user(username, password, kaggle_username=None, api_key = None):
-    #Connect to database and set cursor
     connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
 
-    #Encrypt passwords / sensitive info
     user_hashed_pass, user_salt = hash_password(password)
-
     api_key_encrypted = encrypt_api_key(api_key)
 
     try:
         cursor.execute("""
-            INSERT INTO App_Users (username, password_hash, password_salt, kaggle_username, api_key_hash)
+            INSERT INTO App_Users (username, password_hash, password_salt, kaggle_username, encrypted_api_key)
             VALUES (?, ?, ?, ?, ?)
         """, (username, user_hashed_pass, user_salt, kaggle_username, api_key_encrypted))
         connection.commit()
@@ -131,12 +129,14 @@ def verify_user(username: str, password: str):
     return None
 
 def get_encrypted_user_api(user_id):
-    #Gets kaggle username and functional API key for a given user
+    '''
+    Retrieve the Kaggle username and decrypted API key for a given user ID.
+    '''
     connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT kaggle_username, api_key_hash FROM App_Users where id = ?
+        SELECT kaggle_username, encrypted_api_key FROM App_Users where id = ?
     """, (user_id,))
 
     result = cursor.fetchone()
