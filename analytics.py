@@ -109,9 +109,7 @@ def dataset_quality_alerts(df: pd.DataFrame) -> dict:
 
     return result
 
-#Returns a matplot axes value
 def graph_comparison(col1: pd.Series, col2: pd.Series, graph_type: str):
-    #TODO: add cases allowing users to select multiple types of graphs, read in from form dropdown
     x_series = col1
     y_series = col2
 
