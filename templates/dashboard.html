@@ -54,15 +54,20 @@
                     
                     <div class="input-group input-group-sm" style="max-width: 320px;"> 
                         <select name="columns" id="column-select" class="form-select-sm" multiple required size="3">
-                            {% if data and data.columns %}
-                                {% for col in data.columns %}
+                            {% if data and data.col_list %}
+                                {% for col in data.col_list %}
                                     <option value="{{ col }}" selected>{{ col }}</option>
                                 {% endfor %}
                             {% else %}
                                 <option value="" disabled>No columns in dataset.</option>
                             {% endif %}
                         </select>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleSelectAllColumns('cleanColumnsSelect')">Toggle All</button>
+                        <button 
+                            type="button" 
+                            class="btn btn-outline-secondary btn-sm" 
+                            onclick="toggleSelectAllColumns('column-select')">
+                            Toggle All
+                        </button>
                     </div>
                     
                     <button type="submit" class="btn btn-danger btn-sm">Drop Missing Values</button>

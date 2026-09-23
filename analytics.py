@@ -6,7 +6,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from kaggle.api.kaggle_api_extended import KaggleApi
 
 def load_dataframe(file_path: str) -> pd.DataFrame:
     extension = os.path.splitext(file_path)[1].lower()
@@ -36,6 +35,8 @@ def button_drop_missing(df:pd.DataFrame, target_columns: list[str] | None = None
     return cleaned_df
 
 def download_kaggle_dataset(url: str, dest_folder: str) -> str:
+    from kaggle.api.kaggle_api_extended import KaggleApi
+
     api = KaggleApi()
     api.authenticate()
 

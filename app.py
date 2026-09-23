@@ -42,6 +42,16 @@ def get_active_file() -> str | None:
 
     return None
 
+def clear_active_files() -> None:
+    upload_folder = app.config['UPLOAD_FOLDER']
+
+    if not os.path.exists(upload_folder):
+        return
+
+    for filename in os.listdir(upload_folder):
+        if filename.startswith("active_data"):
+            os.remove(os.path.join(upload_folder, filename))
+
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     '''
@@ -222,6 +232,8 @@ def login_page():
         user_id = verify_user(username, password)
 
         if user_id:
+            clear_active_files()
+
             session['user_id'] = user_id
             session['username'] = username
 
@@ -235,6 +247,7 @@ def login_page():
 
 @app.route('/logout')
 def logout():
+    clear_active_files()
     session.clear()
     flash("You have been logged out of user account.")
     return redirect(url_for('login_page'))
